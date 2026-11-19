@@ -441,7 +441,7 @@
           <li>App para TV box, Fire Stick, celular e Windows</li>
           <li>Suporte direto com a gente</li>
         </ul>
-        <a class="btn btn-lar" href="#suporte">Quero revender</a>
+        <a class="btn btn-lar" id="btRevenda" href="#suporte">Quero revender</a>
       </div>
       <div class="num">
         <div><b>4</b><small>plataformas hoje</small></div>
@@ -546,6 +546,11 @@ function addContato(href, texto, extra) {
   if (extra) { var s = document.createElement('p'); s.className = 'sub'; s.style.marginTop = '10px'; s.textContent = extra; contato.appendChild(s); }
 }
 if (CONFIG.whatsapp) addContato('https://wa.me/' + CONFIG.whatsapp, 'Falar no WhatsApp');
+if (CONFIG.whatsapp) {
+  var rv = document.getElementById('btRevenda');
+  rv.href = 'https://wa.me/' + CONFIG.whatsapp + '?text=' + encodeURIComponent('Olá! Quero ser revendedor do Sofae.');
+  rv.target = '_blank'; rv.rel = 'noopener';
+}
 if (CONFIG.email) addContato('mailto:' + CONFIG.email, 'Enviar e-mail', CONFIG.email);
 
 // Copiar
