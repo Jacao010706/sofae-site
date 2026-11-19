@@ -2,6 +2,36 @@
   "cleanUrls": true,
   "rewrites": [
     {
+      "source": "/app",
+      "has": [
+        {
+          "type": "host",
+          "value": "ativar.sofae.com.br"
+        }
+      ],
+      "destination": "https://simanplay-iptv-admin-panel.vercel.app/app"
+    },
+    {
+      "source": "/dispositivo",
+      "has": [
+        {
+          "type": "host",
+          "value": "ativar.sofae.com.br"
+        }
+      ],
+      "destination": "https://simanplay-iptv-admin-panel.vercel.app/dispositivo"
+    },
+    {
+      "source": "/_next/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "ativar.sofae.com.br"
+        }
+      ],
+      "destination": "https://simanplay-iptv-admin-panel.vercel.app/_next/:path*"
+    },
+    {
       "source": "/privacidade/android",
       "destination": "https://simanplay-iptv-admin-panel.vercel.app/sofae/privacidade-android.html"
     },
