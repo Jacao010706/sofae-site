@@ -1,16 +1,49 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/", "has": [{ "type": "host", "value": "ativar.sofae.com.br" }], "destination": "/ativar.html" },
-    { "source": "/privacidade/android", "destination": "https://simanplay-iptv-admin-panel.vercel.app/sofae/privacidade-android.html" },
-    { "source": "/excluir-dados", "destination": "https://simanplay-iptv-admin-panel.vercel.app/sofae/excluir-dados.html" },
-    { "source": "/privacidade", "destination": "https://simanplay-iptv-admin-panel.vercel.app/privacidade/sofae" },
-    { "source": "/sofae/:arquivo*", "destination": "https://simanplay-iptv-admin-panel.vercel.app/sofae/:arquivo*" }
+    {
+      "source": "/privacidade/android",
+      "destination": "https://simanplay-iptv-admin-panel.vercel.app/sofae/privacidade-android.html"
+    },
+    {
+      "source": "/excluir-dados",
+      "destination": "https://simanplay-iptv-admin-panel.vercel.app/sofae/excluir-dados.html"
+    },
+    {
+      "source": "/privacidade",
+      "destination": "https://simanplay-iptv-admin-panel.vercel.app/privacidade/sofae"
+    },
+    {
+      "source": "/sofae/:arquivo*",
+      "destination": "https://simanplay-iptv-admin-panel.vercel.app/sofae/:arquivo*"
+    }
   ],
   "headers": [
-    { "source": "/(.*)", "headers": [
-      { "key": "X-Content-Type-Options", "value": "nosniff" },
-      { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-    ] }
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/",
+      "has": [
+        {
+          "type": "host",
+          "value": "ativar.sofae.com.br"
+        }
+      ],
+      "destination": "/ativar",
+      "permanent": false
+    }
   ]
 }
