@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofae — Ativar e renovar</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1A0B33">
+<link rel="icon" href="/img/icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#140826;--card:#22123d;--line:#3a2a5e;--laranja:#FF8A1A;--laranja2:#ffb15e;--txt:#f3eefc;--sub:#b7a9d6}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:Poppins,system-ui,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:36px 18px;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(circle at 85% 0%,rgba(255,138,26,.18),transparent 45%),radial-gradient(circle at 0% 100%,rgba(124,58,237,.25),transparent 50%)}
+  a{color:inherit;text-decoration:none}
+  .logo img{height:54px;width:auto;margin:0 auto 26px;display:block}
+  .box{width:100%;max-width:520px;background:linear-gradient(150deg,#2b1652,#1b0d34);border:1px solid rgba(255,138,26,.35);border-radius:24px;padding:32px}
+  h1{font-size:1.7rem;font-weight:800;line-height:1.15}
+  p{color:var(--sub);margin-top:10px}
+  label{display:block;font-size:.85rem;font-weight:600;margin:24px 0 8px}
+  input{width:100%;background:#120722;border:1px solid var(--line);border-radius:14px;padding:16px;color:var(--txt);font-family:ui-monospace,Consolas,monospace;font-size:clamp(1rem,5vw,1.35rem);letter-spacing:.08em;text-align:center;outline:none;text-transform:uppercase}
+  input:focus{border-color:var(--laranja)}
+  .dica{font-size:.82rem;margin-top:8px;color:var(--sub)}
+  .bts{display:grid;gap:10px;margin-top:20px}
+  .btn{display:flex;align-items:center;justify-content:center;gap:10px;font-weight:600;border-radius:14px;padding:15px 20px;font-size:1rem;transition:transform .15s,background .15s}
+  .btn:hover{transform:translateY(-2px)}
+  .lar{background:var(--laranja);color:#1a0b00}.lar:hover{background:var(--laranja2)}
+  .cont{border:1px solid var(--line)}.cont:hover{border-color:var(--laranja)}
+  .erro{color:#ff8b8b;font-size:.88rem;margin-top:12px;min-height:1.2em}
+  .passos{margin-top:26px;display:grid;gap:10px;font-size:.9rem;color:var(--sub)}
+  .passos div{display:flex;gap:12px}
+  .passos b{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:.8rem;color:var(--laranja);border:1px solid rgba(255,138,26,.5)}
+  footer{margin-top:28px;font-size:.82rem;color:var(--sub);text-align:center;max-width:520px}
+  footer a{text-decoration:underline}
+</style>
+</head>
+<body>
+  <a class="logo" href="https://sofae.com.br"><img src="/img/logo.png" alt="Sofae"></a>
+  <main class="box">
+    <h1>Ativar, renovar ou enviar sua lista</h1>
+    <p>Digite o código (MAC) que aparece na tela do Sofae no seu aparelho.</p>
+    <form id="f" autocomplete="off">
+      <label for="mac">Código do aparelho (MAC)</label>
+      <input id="mac" maxlength="17" placeholder="AA:BB:CC:DD:EE:FF" inputmode="text" autocapitalize="characters">
+      <div class="dica sub">Pode digitar com ou sem os dois-pontos.</div>
+    </form>
+    <div class="bts">
+      <a class="btn lar" id="btR" href="#">Renovar acesso com PIX</a>
+      <a class="btn cont" id="btE" href="#">Enviar minha lista para o aparelho</a>
+    </div>
+    <div class="erro" id="erro" role="alert"></div>
+    <div class="passos">
+      <div><b>1</b><span>O pagamento é por PIX e a liberação é automática quando o pagamento é confirmado.</span></div>
+      <div><b>2</b><span>Depois de pagar, feche e abra o Sofae de novo.</span></div>
+    </div>
+  </main>
+  <footer>O Sofae é um reprodutor de mídia: não vendemos nem fornecemos canais, filmes ou listas. <a href="https://sofae.com.br">Voltar ao site</a></footer>
+
+<script>
+  var PAINEL = 'https://simanplay-iptv-admin-panel.vercel.app';
+  var MARCA = 'sofae';
+  var mac = document.getElementById('mac'), erro = document.getElementById('erro');
+  var btR = document.getElementById('btR'), btE = document.getElementById('btE');
+  function limpa(v) { return (v || '').toUpperCase().replace(/[^0-9A-F]/g, '').slice(0, 12); }
+  function mostra(h) { var m = h.match(/.{1,2}/g); return m ? m.join(':') : ''; }
+  function atualiza() {
+    var h = limpa(mac.value), q = '?mac=' + h + '&r=' + MARCA;
+    btR.href = h.length === 12 ? PAINEL + '/app' + q : '#';
+    btE.href = h.length === 12 ? PAINEL + '/dispositivo' + q : '#';
+  }
+  mac.addEventListener('input', function () { mac.value = mostra(limpa(mac.value)); erro.textContent = ''; atualiza(); });
+  [btR, btE].forEach(function (b) {
+    b.addEventListener('click', function (e) {
+      if (limpa(mac.value).length !== 12) { e.preventDefault(); erro.textContent = 'Digite o código de 12 letras/números que aparece na tela do aparelho.'; mac.focus(); }
+    });
+  });
+  document.getElementById('f').addEventListener('submit', function (e) { e.preventDefault(); btR.click(); });
+  try { var p = new URLSearchParams(location.search).get('mac'); if (p) mac.value = mostra(limpa(p)); } catch (e) {}
+  atualiza();
+</script>
+</body>
+</html>

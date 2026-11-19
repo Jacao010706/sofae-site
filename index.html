@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sofae — Seu player de TV</title>
+<meta name="description" content="Sofae é um reprodutor de mídia para TV box, Fire TV, celular e computador. Você coloca a sua lista e assiste ao vivo, filmes e séries organizados para a TV.">
+<meta name="theme-color" content="#1A0B33">
+<link rel="icon" href="img/icone.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#140826; --bg2:#1A0B33; --card:#22123d; --card2:#2E1F4D; --line:#3a2a5e;
+    --laranja:#FF8A1A; --laranja2:#ffb15e; --txt:#f3eefc; --sub:#b7a9d6; --ok:#2ecc71;
+    --raio:18px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:Poppins,system-ui,sans-serif;background:var(--bg);color:var(--txt);line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  img{max-width:100%;height:auto;display:block}
+  .wrap{max-width:1160px;margin:0 auto;padding:0 22px}
+  section{padding:84px 0;position:relative}
+  .tag{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--laranja);background:rgba(255,138,26,.1);border:1px solid rgba(255,138,26,.35);padding:6px 14px;border-radius:99px}
+  .tag::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--laranja)}
+  h1{font-size:clamp(2.4rem,6vw,4.4rem);line-height:1.05;font-weight:800;letter-spacing:-.02em}
+  h2{font-size:clamp(1.9rem,4vw,2.8rem);line-height:1.12;font-weight:800;letter-spacing:-.015em}
+  h3{font-size:1.15rem;font-weight:700}
+  .lar{color:var(--laranja)}
+  .sub{color:var(--sub)}
+  .cab{text-align:center;max-width:720px;margin:0 auto 46px}
+  .cab p{margin-top:12px;color:var(--sub);font-size:1.05rem}
+  .cab .tag{margin-bottom:16px}
+
+  /* topo */
+  header{position:sticky;top:0;z-index:50;background:rgba(20,8,38,.82);backdrop-filter:blur(14px);border-bottom:1px solid rgba(58,42,94,.6)}
+  .topo{display:flex;align-items:center;justify-content:space-between;height:70px;gap:18px}
+  .topo .logo img{height:40px;width:auto}
+  nav{display:flex;align-items:center;gap:26px;font-size:.94rem;color:var(--sub)}
+  nav a:hover{color:var(--txt)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;font-weight:600;border-radius:14px;padding:13px 22px;transition:transform .15s,background .15s,border-color .15s;cursor:pointer;border:0;font-family:inherit;font-size:1rem}
+  .btn:hover{transform:translateY(-2px)}
+  .btn-lar{background:var(--laranja);color:#1a0b00}
+  .btn-lar:hover{background:var(--laranja2)}
+  .btn-cont{border:1px solid var(--line);color:var(--txt);background:rgba(255,255,255,.02)}
+  .btn-cont:hover{border-color:var(--laranja)}
+  .btn-peq{padding:9px 16px;font-size:.9rem;border-radius:12px}
+  .menu-bt{display:none;background:none;border:1px solid var(--line);color:var(--txt);border-radius:10px;padding:8px 10px;cursor:pointer}
+
+  /* hero */
+  .hero{padding:70px 0 40px;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:-20% -10% auto auto;width:720px;height:720px;background:radial-gradient(circle,rgba(255,138,26,.22),transparent 60%);pointer-events:none}
+  .hero::after{content:"";position:absolute;left:-200px;bottom:-200px;width:620px;height:620px;background:radial-gradient(circle,rgba(124,58,237,.28),transparent 62%);pointer-events:none}
+  .hero-g{display:grid;grid-template-columns:1.15fr .85fr;gap:40px;align-items:center;position:relative;z-index:1}
+  .hero h1 .lar{display:block}
+  .hero p.lead{font-size:1.15rem;color:var(--sub);margin:20px 0 30px;max-width:540px}
+  .acoes{display:flex;flex-wrap:wrap;gap:12px}
+  .lojas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:30px;max-width:520px}
+  .loja{display:flex;align-items:center;gap:12px;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:rgba(34,18,61,.6);transition:border-color .15s,transform .15s}
+  .loja:hover{border-color:var(--laranja);transform:translateY(-2px)}
+  .loja svg{width:26px;height:26px;flex:none;color:var(--laranja)}
+  .loja small{display:block;font-size:.72rem;color:var(--sub);line-height:1.2}
+  .loja b{font-size:1rem;font-weight:700;line-height:1.25}
+  .loja.breve{opacity:.6}
+  .tel{position:relative;justify-self:center;width:min(330px,80vw)}
+  .tel .moldura{border-radius:36px;padding:10px;background:linear-gradient(160deg,#3a2a5e,#160a2b);box-shadow:0 40px 90px -20px rgba(0,0,0,.7),0 0 0 1px rgba(255,255,255,.06)}
+  .tel img{border-radius:28px}
+  .tel .flut{position:absolute;background:var(--card2);border:1px solid var(--line);border-radius:14px;padding:10px 14px;font-size:.82rem;display:flex;align-items:center;gap:10px;box-shadow:0 18px 40px -12px rgba(0,0,0,.6);animation:boia 6s ease-in-out infinite}
+  .tel .flut b{color:var(--laranja)}
+  .tel .f1{left:-70px;top:47%}
+  .tel .f2{right:-60px;bottom:18%;animation-delay:-3s}
+  @keyframes boia{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+  .ponto{width:9px;height:9px;border-radius:50%;background:#ff3b3b;box-shadow:0 0 0 4px rgba(255,59,59,.2)}
+
+  /* aviso */
+  .aviso-faixa{padding:0}
+  .aviso{display:flex;gap:18px;align-items:center;background:linear-gradient(90deg,rgba(255,138,26,.12),rgba(124,58,237,.12));border:1px solid rgba(255,138,26,.3);border-radius:var(--raio);padding:20px 24px}
+  .aviso svg{width:36px;height:36px;flex:none;color:var(--laranja)}
+  .aviso p{color:var(--sub);font-size:.96rem}
+  .aviso strong{color:var(--txt)}
+
+  /* passos */
+  .passos{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .passo{background:var(--card);border:1px solid var(--line);border-radius:var(--raio);padding:28px}
+  .passo .n{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--laranja);border:1.5px solid rgba(255,138,26,.5);background:rgba(255,138,26,.08);margin-bottom:18px}
+  .passo p{color:var(--sub);margin-top:8px;font-size:.96rem}
+
+  /* recursos */
+  .rec-g{display:grid;grid-template-columns:.9fr 1.1fr;gap:56px;align-items:center}
+  .rec-lista{display:grid;gap:22px;margin-top:28px}
+  .rec{display:flex;gap:16px}
+  .ic{width:46px;height:46px;flex:none;border-radius:13px;display:grid;place-items:center;background:rgba(255,138,26,.1);border:1px solid rgba(255,138,26,.25);color:var(--laranja)}
+  .ic svg{width:22px;height:22px}
+  .rec p{color:var(--sub);font-size:.95rem;margin-top:2px}
+  .duas-tel{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+  .duas-tel img{border-radius:24px;border:1px solid var(--line);box-shadow:0 30px 60px -20px rgba(0,0,0,.7)}
+  .duas-tel img:last-child{margin-top:60px}
+  .cards6{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:56px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--raio);padding:26px}
+  .card .ic{margin-bottom:16px}
+  .card p{color:var(--sub);font-size:.94rem;margin-top:6px}
+
+  /* plataformas */
+  .plat-grupo{margin-top:34px}
+  .plat-grupo h4{font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;color:var(--laranja);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .plat-grupo h4::after{content:"";flex:1;height:1px;background:var(--line)}
+  .plat{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+  .pl{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 10px 14px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px;transition:border-color .15s,transform .15s}
+  a.pl:hover{border-color:var(--laranja);transform:translateY(-3px)}
+  .pl svg{width:30px;height:30px;color:var(--txt)}
+  .pl b{font-size:.92rem}
+  .pl small{font-size:.74rem;color:var(--sub)}
+  .selo{font-size:.68rem;font-weight:700;padding:3px 10px;border-radius:99px;margin-top:4px}
+  .s-ok{background:rgba(255,138,26,.15);color:var(--laranja);border:1px solid rgba(255,138,26,.4)}
+  .s-an{background:rgba(52,152,219,.14);color:#7cc4f5;border:1px solid rgba(52,152,219,.35)}
+  .s-br{background:rgba(255,255,255,.05);color:var(--sub);border:1px solid var(--line)}
+  .pl.breve{opacity:.62}
+
+  /* instalar */
+  .inst{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .inst .card ol{margin:12px 0 0 18px;color:var(--sub);font-size:.93rem;display:grid;gap:6px}
+  .inst .card b{color:var(--txt)}
+  .codigo{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;background:#120722;border:1px dashed rgba(255,138,26,.45);border-radius:12px;padding:10px 14px;font-family:ui-monospace,Consolas,monospace;font-size:.92rem;color:var(--laranja2);word-break:break-all}
+  .copiar{background:var(--card2);border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:6px 10px;font-size:.78rem;cursor:pointer;font-family:inherit;flex:none}
+
+  /* renovar / enviar */
+  .ativ{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
+  .painel-mac{background:linear-gradient(150deg,#2b1652,#1b0d34);border:1px solid rgba(255,138,26,.35);border-radius:22px;padding:34px}
+  .painel-mac p{color:var(--sub);margin:10px 0 22px}
+  .mac-row{display:flex;gap:10px;flex-wrap:wrap}
+  .mac-row input{flex:1;min-width:220px;background:#120722;border:1px solid var(--line);border-radius:13px;padding:14px 16px;color:var(--txt);font-family:ui-monospace,Consolas,monospace;font-size:1rem;letter-spacing:.06em;outline:none;text-transform:uppercase}
+  .mac-row input:focus{border-color:var(--laranja)}
+  .mac-acoes{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .erro{color:#ff8b8b;font-size:.88rem;margin-top:10px;min-height:1.2em}
+  .lado{display:grid;gap:14px}
+  .lado a{display:flex;align-items:center;gap:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--raio);padding:20px;transition:border-color .15s}
+  .lado a:hover{border-color:var(--laranja)}
+  .lado a span{flex:1}
+  .lado small{display:block;color:var(--sub);font-size:.86rem}
+  .seta{color:var(--sub)}
+
+  /* tutoriais */
+  .tut{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .vid{background:var(--card);border:1px solid var(--line);border-radius:var(--raio);overflow:hidden}
+  .vid .thumb{aspect-ratio:16/10;background:linear-gradient(140deg,#3a2470,#1b0d34);display:grid;place-items:center;position:relative}
+  .vid .thumb::after{content:"Em breve";position:absolute;top:10px;right:10px;font-size:.68rem;font-weight:700;background:rgba(0,0,0,.45);padding:3px 9px;border-radius:99px;color:var(--sub)}
+  .play{width:52px;height:52px;border-radius:50%;background:var(--laranja);display:grid;place-items:center;color:#1a0b00;opacity:.85}
+  .vid div.t{padding:14px 16px}
+  .vid b{font-size:.95rem}
+  .vid small{display:block;color:var(--sub);font-size:.82rem}
+
+  /* revenda */
+  .revenda{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:26px;padding:48px}
+  .revenda ul{list-style:none;display:grid;gap:12px;margin:22px 0 28px}
+  .revenda li{display:flex;gap:12px;color:var(--sub)}
+  .revenda li::before{content:"✓";color:var(--laranja);font-weight:800}
+  .num{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .num div{background:#160a2b;border:1px solid var(--line);border-radius:18px;padding:22px}
+  .num b{font-size:1.6rem;color:var(--laranja);display:block}
+  .num small{color:var(--sub)}
+
+  /* formatos */
+  .fmt{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .fmt .card h5{font-size:.78rem;letter-spacing:.14em;color:var(--laranja);text-transform:uppercase;margin-bottom:12px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chips span{font-size:.8rem;font-weight:600;background:#160a2b;border:1px solid var(--line);border-radius:8px;padding:5px 10px}
+
+  /* legal */
+  .legal{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .legal .card ul{margin:12px 0 0 18px;color:var(--sub);display:grid;gap:7px;font-size:.94rem}
+  .nao{border-color:rgba(255,90,90,.35)}
+  .nao h3{color:#ff9b9b}
+  .sim h3{color:var(--laranja)}
+
+  /* faq */
+  .faq{max-width:820px;margin:0 auto;display:grid;gap:12px}
+  details{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 22px}
+  summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+  summary::after{content:"+";color:var(--laranja);font-size:1.3rem;line-height:1}
+  details[open] summary::after{content:"–"}
+  details p{color:var(--sub);margin-top:10px;font-size:.95rem}
+
+  /* rodapé */
+  footer{border-top:1px solid var(--line);padding:46px 0 30px;margin-top:40px}
+  .rod{display:flex;justify-content:space-between;gap:30px;flex-wrap:wrap}
+  .rod img{height:38px;width:auto;margin-bottom:12px}
+  .rod p{color:var(--sub);font-size:.9rem;max-width:380px}
+  .rod .col{display:grid;gap:8px;font-size:.92rem;color:var(--sub);align-content:start}
+  .rod .col b{color:var(--txt);margin-bottom:4px}
+  .rod .col a:hover{color:var(--laranja)}
+  .copy{text-align:center;color:var(--sub);font-size:.82rem;margin-top:36px}
+
+  /* modal de aviso */
+  .modal-fundo{position:fixed;inset:0;background:rgba(8,3,16,.72);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .modal-fundo.on{display:flex}
+  .modal{max-width:520px;width:100%;background:linear-gradient(160deg,#2a1650,#170a2c);border:1px solid rgba(255,138,26,.4);border-radius:24px;padding:32px;box-shadow:0 40px 100px rgba(0,0,0,.6)}
+  .modal h3{font-size:1.5rem;margin:14px 0 10px}
+  .modal p{color:var(--sub)}
+  .modal .acoes{margin-top:24px;justify-content:flex-end}
+
+  .revela{opacity:0;transform:translateY(24px);transition:opacity .7s,transform .7s}
+  .revela.vis{opacity:1;transform:none}
+
+  @media (max-width:980px){
+    nav{display:none;position:absolute;top:70px;left:0;right:0;flex-direction:column;background:var(--bg2);padding:20px;border-bottom:1px solid var(--line);gap:16px}
+    nav.aberto{display:flex}
+    .menu-bt{display:block}
+    .hero-g,.rec-g,.ativ,.revenda,.legal{grid-template-columns:1fr}
+    .tel .f1{left:-10px}.tel .f2{right:-10px}
+    .passos,.cards6,.inst,.fmt{grid-template-columns:1fr 1fr}
+    .plat{grid-template-columns:repeat(3,1fr)}
+    .tut{grid-template-columns:1fr 1fr}
+    .revenda{padding:30px}
+  }
+  @media (max-width:600px){
+    section{padding:60px 0}
+    .passos,.cards6,.inst,.fmt,.tut{grid-template-columns:1fr}
+    .plat{grid-template-columns:repeat(2,1fr)}
+    .lojas{grid-template-columns:1fr}
+    .aviso{flex-direction:column;align-items:flex-start}
+    .tel .flut{display:none}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.revela{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<!-- Ícones reutilizados -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-android" viewBox="0 0 24 24"><path fill="currentColor" d="M6 18c0 .55.45 1 1 1h1v3.5a1.5 1.5 0 0 0 3 0V19h2v3.5a1.5 1.5 0 0 0 3 0V19h1c.55 0 1-.45 1-1V8H6v10zM3.5 8A1.5 1.5 0 0 0 2 9.5v7a1.5 1.5 0 0 0 3 0v-7A1.5 1.5 0 0 0 3.5 8zm17 0A1.5 1.5 0 0 0 19 9.5v7a1.5 1.5 0 0 0 3 0v-7A1.5 1.5 0 0 0 20.5 8zm-4.97-5.84 1.3-1.3a.5.5 0 0 0-.7-.7l-1.48 1.48A5.96 5.96 0 0 0 12 1c-.96 0-1.86.23-2.66.63L7.85.15a.5.5 0 0 0-.7.7l1.31 1.31A5.97 5.97 0 0 0 6 7h12a5.97 5.97 0 0 0-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/></symbol>
+  <symbol id="i-tv" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 7h18v11H3zM8 21h8M8 3l4 4 4-4"/></symbol>
+  <symbol id="i-fogo" viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 1s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5 1zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z"/></symbol>
+  <symbol id="i-win" viewBox="0 0 24 24"><path fill="currentColor" d="M3 5.5 10.5 4.5v7H3v-6zm0 13 7.5 1v-7H3v6zm8.5 1.15L21 21v-8.5h-9.5v7.15zm0-15.3V11.5H21V3l-9.5 1.35z"/></symbol>
+  <symbol id="i-cel" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M11 18h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+  <symbol id="i-pc" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M3 4h18v12H3zM8 20h8M12 16v4"/></symbol>
+  <symbol id="i-maca" viewBox="0 0 24 24"><path fill="currentColor" d="M16.4 12.6c0-2.6 2.1-3.8 2.2-3.9-1.2-1.8-3.1-2-3.7-2-1.6-.2-3.1.9-3.9.9s-2-.9-3.4-.9C5.8 6.7 4 7.8 3 9.6c-2 3.5-.5 8.6 1.4 11.4.9 1.4 2 2.9 3.5 2.9 1.4-.1 1.9-.9 3.6-.9s2.2.9 3.6.9c1.5 0 2.4-1.4 3.3-2.8 1-1.6 1.5-3.1 1.5-3.2-.1 0-2.9-1.1-3-4.3zM13.8 5c.7-.9 1.3-2.2 1.1-3.5-1.1.1-2.4.7-3.2 1.6-.7.8-1.3 2.1-1.1 3.3 1.2.1 2.4-.6 3.2-1.4z"/></symbol>
+  <symbol id="i-linux" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3c-2.2 0-3.5 1.9-3.5 4.4 0 1.8-.6 3-1.7 4.6C5.6 13.6 5 15.3 5 17c0 1.4 1.3 3 3.2 3.3.9.1 1.6-.6 2.3-.6h3c.7 0 1.4.7 2.3.6C17.7 20 19 18.4 19 17c0-1.7-.6-3.4-1.8-5-1.1-1.6-1.7-2.8-1.7-4.6C15.5 4.9 14.2 3 12 3z"/><circle cx="10.3" cy="8" r=".8" fill="currentColor"/><circle cx="13.7" cy="8" r=".8" fill="currentColor"/></symbol>
+  <symbol id="i-game" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M6 9h4M8 7v4M15 10h.01M18 8h.01M7.5 5h9a5 5 0 0 1 4.9 6l-1 5a2.5 2.5 0 0 1-4.3 1.2L14.5 15h-5l-1.6 2.2A2.5 2.5 0 0 1 3.6 16l-1-5a5 5 0 0 1 4.9-6z"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0-5-5m5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-escudo" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 3 4 6v6c0 5 3.4 8.3 8 9 4.6-.7 8-4 8-9V6l-8-3z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></symbol>
+  <symbol id="i-seta" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M5 12h14m-6-6 6 6-6 6"/></symbol>
+</svg>
+
+<header>
+  <div class="wrap topo">
+    <a class="logo" href="#inicio" aria-label="Sofae — início"><img src="img/logo.png" alt="Sofae"></a>
+    <nav id="menu">
+      <a href="#plataformas">Baixar</a>
+      <a href="#instalar">Como instalar</a>
+      <a href="#tutoriais">Tutoriais</a>
+      <a href="#revenda">Revendedor</a>
+      <a href="#suporte" class="btn btn-lar btn-peq">Suporte</a>
+    </nav>
+    <button class="menu-bt" id="menuBt" aria-label="Abrir menu">☰</button>
+  </div>
+</header>
+
+<main id="inicio">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="wrap hero-g">
+    <div>
+      <span class="tag">Reprodutor de mídia para TV</span>
+      <h1 style="margin-top:20px">Sua lista.<br>Sua TV.<span class="lar">Do seu jeito.</span></h1>
+      <p class="lead">O Sofae organiza a sua lista em <b>Ao vivo</b>, <b>Filmes</b> e <b>Séries</b>, com busca, favoritos e a grade de <b>Jogos do dia</b> — tudo pelo controle remoto, na TV box, Fire Stick, celular ou computador.</p>
+      <div class="acoes">
+        <a class="btn btn-lar" href="#plataformas"><svg width="20" height="20"><use href="#i-down"/></svg>Instalar o app</a>
+        <a class="btn btn-cont" href="#instalar">Como instalar</a>
+      </div>
+      <div class="lojas">
+        <a class="loja" data-dl="android" href="#"><svg><use href="#i-android"/></svg><span><small>Android · TV box</small><b>Baixar APK</b></span></a>
+        <a class="loja" data-dl="firetv" href="#instalar"><svg><use href="#i-fogo"/></svg><span><small>Fire TV · Fire Stick</small><b>Pelo Downloader</b></span></a>
+        <a class="loja" data-dl="windows" href="#"><svg><use href="#i-win"/></svg><span><small>Windows · PC</small><b>Instalador</b></span></a>
+        <a class="loja breve" href="#plataformas"><svg><use href="#i-android"/></svg><span><small>Google Play · Amazon</small><b>Em análise</b></span></a>
+      </div>
+    </div>
+    <div class="tel">
+      <div class="moldura"><img src="img/home_crop.jpg" alt="Tela inicial do Sofae com TV ao vivo e filmes" width="610" height="1206"></div>
+      <div class="flut f1"><span class="ponto"></span><span><b>Ao vivo</b> · reconecta sozinho</span></div>
+      <div class="flut f2">⚽ <span><b>Jogos do dia</b> com escudos</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- AVISO -->
+<section class="aviso-faixa">
+  <div class="wrap">
+    <div class="aviso revela">
+      <svg><use href="#i-escudo"/></svg>
+      <p><strong>O Sofae é só um reprodutor.</strong> Ele mostra apenas o que <strong>você</strong> adiciona: não vendemos, não hospedamos e não fornecemos canais, filmes, séries nem listas. Use somente conteúdo que você tem direito de assistir.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMO FUNCIONA -->
+<section id="como">
+  <div class="wrap">
+    <div class="cab revela"><span class="tag">Como funciona</span><h2>Pronto em 3 passos</h2><p>Sem cadastro complicado: instale, coloque a sua lista e assista.</p></div>
+    <div class="passos">
+      <div class="passo revela"><div class="n">1</div><h3>Instale o app</h3><p>Baixe o Sofae no seu aparelho: TV box, Fire Stick, celular ou computador.</p></div>
+      <div class="passo revela"><div class="n">2</div><h3>Adicione a sua lista</h3><p>Entre com o usuário e a senha da sua lista (Xtream) ou com o link M3U.</p></div>
+      <div class="passo revela"><div class="n">3</div><h3>Assista na TV</h3><p>Ao vivo, filmes e séries organizados por categoria, com favoritos e continuar assistindo.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- RECURSOS -->
+<section id="recursos" style="padding-top:20px">
+  <div class="wrap">
+    <div class="rec-g">
+      <div class="revela">
+        <span class="tag">Feito para a TV</span>
+        <h2 style="margin-top:16px">Tudo organizado,<br>do seu jeito</h2>
+        <div class="rec-lista">
+          <div class="rec"><div class="ic"><svg><use href="#i-tv"/></svg></div><div><h3>Ao vivo, filmes e séries</h3><p>A lista vira categorias com capa, busca e navegação completa pelo controle.</p></div></div>
+          <div class="rec"><div class="ic">⚽</div><div><h3>Jogos do dia</h3><p>Ontem, hoje e amanhã, com escudos, horário de Brasília e os canais da sua lista que passam o jogo.</p></div></div>
+          <div class="rec"><div class="ic">★</div><div><h3>Favoritos e continuar</h3><p>Marque o que mais assiste e volte de onde parou.</p></div></div>
+        </div>
+      </div>
+      <div class="duas-tel revela">
+        <img src="img/filmes_crop.jpg" alt="Tela de filmes do Sofae" width="610" height="1186" loading="lazy">
+        <img src="img/vivo_crop.jpg" alt="Tela de canais ao vivo do Sofae" width="610" height="1186" loading="lazy">
+      </div>
+    </div>
+    <div class="cards6">
+      <div class="card revela"><div class="ic">▶</div><h3>Vídeo em qualquer formato</h3><p>HLS (M3U8), MPEG-TS, MP4, MKV e mais — se é vídeo, provavelmente toca.</p></div>
+      <div class="card revela"><div class="ic">↻</div><h3>Ao vivo que reconecta</h3><p>Se a transmissão cair, o player tenta de novo sozinho.</p></div>
+      <div class="card revela"><div class="ic">⌘</div><h3>Xtream ou M3U</h3><p>Entre com usuário e senha da lista ou com o link M3U.</p></div>
+      <div class="card revela"><div class="ic">◎</div><h3>Controle remoto</h3><p>Pensado para TV: tudo funciona pelas setas e pelo OK.</p></div>
+      <div class="card revela"><div class="ic">⧉</div><h3>Vários aparelhos</h3><p>TV box, Fire Stick, celular, tablet e computador.</p></div>
+      <div class="card revela"><div class="ic">✦</div><h3>Modo demonstração</h3><p>Sem lista ainda? Experimente o app com vídeos abertos de demonstração.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- PLATAFORMAS -->
+<section id="plataformas">
+  <div class="wrap">
+    <div class="cab revela"><span class="tag">Disponível em</span><h2>Um app, várias telas</h2><p>Baixe agora nos aparelhos marcados. Os outros estão chegando.</p></div>
+
+    <div class="plat-grupo revela">
+      <h4>TV e TV box</h4>
+      <div class="plat">
+        <a class="pl" data-dl="android" href="#"><svg><use href="#i-android"/></svg><b>Android TV</b><small>TV box</small><span class="selo s-ok">baixar ↗</span></a>
+        <a class="pl" href="#instalar"><svg><use href="#i-fogo"/></svg><b>Fire TV</b><small>Fire Stick</small><span class="selo s-ok">como instalar</span></a>
+        <div class="pl"><svg><use href="#i-fogo"/></svg><b>Amazon Appstore</b><small>Fire TV</small><span class="selo s-an">em análise</span></div>
+        <div class="pl breve"><svg><use href="#i-tv"/></svg><b>Samsung</b><small>Tizen</small><span class="selo s-br">em breve</span></div>
+        <div class="pl breve"><svg><use href="#i-tv"/></svg><b>LG</b><small>webOS</small><span class="selo s-br">em breve</span></div>
+        <div class="pl breve"><svg><use href="#i-tv"/></svg><b>Roku</b><small>TV e stick</small><span class="selo s-br">em breve</span></div>
+        <div class="pl breve"><svg><use href="#i-maca"/></svg><b>Apple TV</b><small>tvOS</small><span class="selo s-br">em breve</span></div>
+        <div class="pl breve"><svg><use href="#i-game"/></svg><b>Xbox</b><small>console</small><span class="selo s-br">em breve</span></div>
+      </div>
+    </div>
+
+    <div class="plat-grupo revela">
+      <h4>Celular e tablet</h4>
+      <div class="plat">
+        <a class="pl" data-dl="android" href="#"><svg><use href="#i-cel"/></svg><b>Android</b><small>APK direto</small><span class="selo s-ok">baixar ↗</span></a>
+        <div class="pl"><svg><use href="#i-android"/></svg><b>Google Play</b><small>Android</small><span class="selo s-an">em análise</span></div>
+        <div class="pl breve"><svg><use href="#i-maca"/></svg><b>iPhone · iPad</b><small>iOS</small><span class="selo s-br">em breve</span></div>
+      </div>
+    </div>
+
+    <div class="plat-grupo revela">
+      <h4>Computador</h4>
+      <div class="plat">
+        <a class="pl" data-dl="windows" href="#"><svg><use href="#i-win"/></svg><b>Windows</b><small>PC</small><span class="selo s-ok">baixar ↗</span></a>
+        <div class="pl breve"><svg><use href="#i-maca"/></svg><b>macOS</b><small>Mac</small><span class="selo s-br">em breve</span></div>
+        <div class="pl breve"><svg><use href="#i-linux"/></svg><b>Linux</b><small>PC</small><span class="selo s-br">em breve</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMO INSTALAR -->
+<section id="instalar" style="padding-top:20px">
+  <div class="wrap">
+    <div class="cab revela"><span class="tag">Passo a passo</span><h2>Como instalar</h2></div>
+    <div class="inst">
+      <div class="card revela">
+        <div class="ic"><svg><use href="#i-fogo"/></svg></div>
+        <h3>Fire Stick e TV box (Downloader)</h3>
+        <ol>
+          <li>Instale o app <b>Downloader</b> pela loja do aparelho.</li>
+          <li>Abra e digite o endereço abaixo.</li>
+          <li>Quando baixar, toque em <b>Instalar</b>.</li>
+        </ol>
+        <div class="codigo"><span id="urlDownloader"></span><button class="copiar" data-copia="urlDownloader">Copiar</button></div>
+      </div>
+      <div class="card revela">
+        <div class="ic"><svg><use href="#i-android"/></svg></div>
+        <h3>Celular e TV box Android</h3>
+        <ol>
+          <li>Toque em <b>Baixar APK</b> no aparelho.</li>
+          <li>Se pedir, permita <b>instalar apps desconhecidos</b> para o navegador.</li>
+          <li>Abra o arquivo baixado e toque em <b>Instalar</b>.</li>
+        </ol>
+        <div class="mac-acoes"><a class="btn btn-lar btn-peq" data-dl="android" href="#">Baixar APK</a></div>
+      </div>
+      <div class="card revela">
+        <div class="ic"><svg><use href="#i-win"/></svg></div>
+        <h3>Windows</h3>
+        <ol>
+          <li>Baixe o <b>Sofae-Setup.exe</b>.</li>
+          <li>Se o navegador avisar, escolha <b>Manter mesmo assim</b>.</li>
+          <li>No aviso azul do Windows: <b>Mais informações → Executar assim mesmo</b>.</li>
+        </ol>
+        <div class="mac-acoes"><a class="btn btn-lar btn-peq" data-dl="windows" href="#">Baixar para Windows</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TUTORIAIS -->
+<section id="tutoriais" style="padding-top:20px">
+  <div class="wrap">
+    <div class="cab revela"><span class="tag">Tutoriais em vídeo</span><h2>Aprenda a usar em minutos</h2><p>Vídeos curtos, passo a passo.</p></div>
+    <div class="tut">
+      <div class="vid revela"><div class="thumb"><div class="play"><svg width="22" height="22"><use href="#i-play"/></svg></div></div><div class="t"><b>Instalar no Fire Stick</b><small>Pelo Downloader</small></div></div>
+      <div class="vid revela"><div class="thumb"><div class="play"><svg width="22" height="22"><use href="#i-play"/></svg></div></div><div class="t"><b>Adicionar a sua lista</b><small>Xtream ou M3U</small></div></div>
+      <div class="vid revela"><div class="thumb"><div class="play"><svg width="22" height="22"><use href="#i-play"/></svg></div></div><div class="t"><b>Modo demonstração</b><small>Conhecer o app sem lista</small></div></div>
+      <div class="vid revela"><div class="thumb"><div class="play"><svg width="22" height="22"><use href="#i-play"/></svg></div></div><div class="t"><b>Jogos do dia</b><small>Achar o canal do jogo</small></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- REVENDA -->
+<section id="revenda">
+  <div class="wrap">
+    <div class="revenda revela">
+      <div>
+        <span class="tag">Seja um revendedor</span>
+        <h2 style="margin-top:16px">Revenda o Sofae</h2>
+        <ul>
+          <li>Painel próprio para ativar e acompanhar os aparelhos dos seus clientes</li>
+          <li>Ativação por aparelho, pelo código que aparece na tela</li>
+          <li>App para TV box, Fire Stick, celular e Windows</li>
+          <li>Suporte direto com a gente</li>
+        </ul>
+        <a class="btn btn-lar" href="#suporte">Quero revender</a>
+      </div>
+      <div class="num">
+        <div><b>4</b><small>plataformas hoje</small></div>
+        <div><b>PT-BR</b><small>app todo em português</small></div>
+        <div><b>MAC</b><small>ativação por aparelho</small></div>
+        <div><b>⚽</b><small>Jogos do dia no app</small></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FORMATOS -->
+<section id="formatos" style="padding-top:20px">
+  <div class="wrap">
+    <div class="cab revela"><span class="tag">Formatos compatíveis</span><h2>Um reprodutor de verdade</h2><p>Os formatos aceitos podem variar um pouco de um aparelho para outro.</p></div>
+    <div class="fmt">
+      <div class="card revela"><h5>Vídeo</h5><div class="chips"><span>MP4</span><span>MKV</span><span>MOV</span><span>AVI</span><span>TS</span><span>WebM</span><span>FLV</span></div></div>
+      <div class="card revela"><h5>Áudio</h5><div class="chips"><span>MP3</span><span>AAC</span><span>M4A</span><span>FLAC</span><span>OGG</span><span>Opus</span></div></div>
+      <div class="card revela"><h5>Transmissões e listas</h5><div class="chips"><span>HLS (M3U8)</span><span>MPEG-TS</span><span>M3U</span><span>Xtream</span></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- LEGAL -->
+<section id="legal" style="padding-top:20px">
+  <div class="wrap">
+    <div class="cab revela"><span class="tag">Aviso importante</span><h2>O que o Sofae é — e o que não é</h2></div>
+    <div class="legal">
+      <div class="card nao revela"><h3>O que NÃO fazemos</h3><ul><li>Não vendemos canais, filmes, séries nem listas</li><li>Não hospedamos nem transmitimos conteúdo</li><li>Não temos ligação com quem vende listas usando o nome Sofae</li></ul></div>
+      <div class="card sim revela"><h3>O que o Sofae é</h3><ul><li>Um reprodutor de mídia: toca só o que você adiciona</li><li>Organiza a sua lista em ao vivo, filmes e séries</li><li>Diante de pedido de titulares de direitos ou autoridades, bloqueamos o acesso do usuário envolvido</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- SUPORTE / FAQ -->
+<section id="suporte">
+  <div class="wrap">
+    <div class="cab revela"><span class="tag">Suporte</span><h2>Perguntas frequentes</h2></div>
+    <div class="faq revela">
+      <details><summary>Preciso pagar pelo app?</summary><p>Baixar e instalar o Sofae não custa nada. Você só precisa ter a sua própria lista.</p></details>
+      <details><summary>O Sofae vem com canais?</summary><p>Não. O Sofae é só o reprodutor: você precisa ter a sua própria lista para assistir.</p></details>
+            <details><summary>O Windows mostrou um aviso ao instalar. É seguro?</summary><p>O aviso aparece porque o instalador é novo e ainda não tem assinatura digital. Use "Manter mesmo assim" e "Executar assim mesmo".</p></details>
+      <details><summary>O canal ao vivo não abre no navegador</summary><p>Algumas listas bloqueiam acesso pelo navegador. Use o app instalado (TV box, Fire Stick, celular ou Windows).</p></details>
+    </div>
+    <div style="text-align:center;margin-top:34px" class="revela" id="contato"></div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="rod">
+      <div><img src="img/logo.png" alt="Sofae"><p>Reprodutor de mídia para TV box, Fire Stick, celular e computador. Não fornecemos conteúdo.</p></div>
+      <div class="col"><b>App</b><a href="#plataformas">Baixar</a><a href="#instalar">Como instalar</a><a href="#tutoriais">Tutoriais</a></div>
+      <div class="col"><b>Ajuda</b><a href="#suporte">Suporte</a><a href="#revenda">Revendedor</a><a href="#legal">O que é o Sofae</a></div>
+      <div class="col"><b>Legal</b><a id="lkPriv" href="#">Política de privacidade</a><a id="lkExcluir" href="#">Excluir meus dados</a><a href="#legal">Aviso legal</a></div>
+    </div>
+    <p class="copy">Sofae © <span id="ano"></span> · Akitemtech</p>
+  </div>
+</footer>
+
+<div class="modal-fundo" id="modal" role="dialog" aria-modal="true" aria-labelledby="mTit">
+  <div class="modal">
+    <span class="tag">Aviso legal</span>
+    <h3 id="mTit">Um reprodutor de mídia. Nada além disso.</h3>
+    <p>O Sofae só mostra o que <b>você</b> adiciona. Não fornecemos, hospedamos nem vendemos conteúdo e não apoiamos pirataria.</p>
+    <div class="acoes"><button class="btn btn-cont btn-peq" id="mNao">Não mostrar de novo</button><button class="btn btn-lar btn-peq" id="mOk">Entendi</button></div>
+  </div>
+</div>
+
+<script>
+/* ===== Configuração do site (troque aqui) ===== */
+var CONFIG = {
+  painel:   'https://simanplay-iptv-admin-panel.vercel.app',
+  android:  'https://simanplay-iptv-admin-panel.vercel.app/api/dl/8794079',
+  windows:  'https://github.com/Jacao010706/simanplay-iptv-app/releases/download/sofae-windows/Sofae-Setup.exe',
+  downloader: 'https://tinyurl.com/2dbgjuc6',
+  whatsapp: '',            // ex.: '5551999999999' (só números). Vazio = botão não aparece
+  email:    ''             // ex.: 'suporte@sofae.com.br'. Vazio = não aparece
+};
+
+document.getElementById('ano').textContent = new Date().getFullYear();
+
+// Links de download
+document.querySelectorAll('[data-dl]').forEach(function (a) {
+  var k = a.getAttribute('data-dl');
+  if (k === 'android') a.href = CONFIG.android;
+  if (k === 'windows') a.href = CONFIG.windows;
+});
+document.getElementById('urlDownloader').textContent = CONFIG.downloader;
+document.getElementById('lkPriv').href = '/privacidade/android';
+document.getElementById('lkExcluir').href = '/excluir-dados';
+
+// Contato (só o que estiver configurado)
+var contato = document.getElementById('contato');
+function addContato(href, texto, extra) {
+  var a = document.createElement('a');
+  a.className = 'btn btn-lar'; a.href = href; a.textContent = texto;
+  a.target = '_blank'; a.rel = 'noopener';
+  contato.appendChild(a);
+  if (extra) { var s = document.createElement('p'); s.className = 'sub'; s.style.marginTop = '10px'; s.textContent = extra; contato.appendChild(s); }
+}
+if (CONFIG.whatsapp) addContato('https://wa.me/' + CONFIG.whatsapp, 'Falar no WhatsApp');
+if (CONFIG.email) addContato('mailto:' + CONFIG.email, 'Enviar e-mail', CONFIG.email);
+
+// Copiar
+document.querySelectorAll('[data-copia]').forEach(function (b) {
+  b.addEventListener('click', function () {
+    var t = document.getElementById(b.getAttribute('data-copia')).textContent;
+    var ok = function () { b.textContent = 'Copiado!'; setTimeout(function () { b.textContent = 'Copiar'; }, 2000); };
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(ok, function () {});
+  });
+});
+
+// Menu no celular
+var menu = document.getElementById('menu');
+document.getElementById('menuBt').addEventListener('click', function () { menu.classList.toggle('aberto'); });
+menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { menu.classList.remove('aberto'); }); });
+
+// Aviso legal na primeira visita
+var modal = document.getElementById('modal');
+var visto = false; try { visto = localStorage.getItem('sofae-aviso') === '1'; } catch (e) {}
+if (!visto) setTimeout(function () { modal.classList.add('on'); }, 600);
+document.getElementById('mOk').addEventListener('click', function () { modal.classList.remove('on'); });
+document.getElementById('mNao').addEventListener('click', function () { try { localStorage.setItem('sofae-aviso', '1'); } catch (e) {} modal.classList.remove('on'); });
+
+// Animação ao rolar
+var io = 'IntersectionObserver' in window ? new IntersectionObserver(function (es) {
+  es.forEach(function (en) { if (en.isIntersecting) { en.target.classList.add('vis'); io.unobserve(en.target); } });
+}, { threshold: .12 }) : null;
+document.querySelectorAll('.revela').forEach(function (el) { io ? io.observe(el) : el.classList.add('vis'); });
+</script>
+</body>
+</html>
