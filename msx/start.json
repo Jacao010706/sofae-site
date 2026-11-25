@@ -1,7 +1,7 @@
 {
     "name": "Sofae TV",
-    "version": "0.1.0",
-    "parameter": "menu:{PREFIX}{SERVER}/msx/menu.json",
+    "version": "0.2.0",
+    "parameter": "menu:request:interaction:init@{PREFIX}{SERVER}/msx/sofae.html",
     "welcome": "none",
     "launcher": {
         "icon": "blank",

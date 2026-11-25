@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Sofae TV (Media Station X)</title>
+<!-- Plugin de interação do Media Station X. Código em ES5 por causa das TVs antigas. -->
+<script src="//msx.benzac.de/js/tvx-plugin.min.js"></script>
+<script>
+(function () {
+    var API = "https://web-production-d8671.up.railway.app/license";
+    var VERSAO = "msx-0.2.0";
+    var SITE = "ativar.sofae.com.br";
+
+    var estado = { lic: null, listas: [], lista: null };
+
+    /* ---------------- utilidades ---------------- */
+    function guardar(k, v) { try { TVXServices.storage.set("sofae_" + k, v); } catch (e) {} }
+    function ler(k) { try { return TVXServices.storage.get("sofae_" + k, ""); } catch (e) { return ""; } }
+
+    function http(metodo, url, corpo, ok, falha) {
+        var x;
+        try { x = new XMLHttpRequest(); } catch (e) { falha("sem XHR"); return; }
+        x.open(metodo, url, true);
+        x.timeout = 25000;
+        if (corpo) { x.setRequestHeader("Content-Type", "application/json"); }
+        x.onreadystatechange = function () {
+            if (x.readyState !== 4) { return; }
+            if (x.status >= 200 && x.status < 300) {
+                var dados = null;
+                try { dados = JSON.parse(x.responseText); } catch (e) { falha("resposta inválida"); return; }
+                ok(dados);
+            } else {
+                falha("HTTP " + x.status);
+            }
+        };
+        x.ontimeout = function () { falha("tempo esgotado"); };
+        try { x.send(corpo ? JSON.stringify(corpo) : null); } catch (e) { falha("erro de rede"); }
+    }
+
+    function novoId() {
+        var s = "msx-";
+        for (var i = 0; i < 24; i++) { s += "0123456789abcdef".charAt(Math.floor(Math.random() * 16)); }
+        return s;
+    }
+
+    function mensagem(titulo, texto) {
+        return {
+            cache: false, type: "pages", headline: titulo,
+            pages: [{ items: [{ type: "default", layout: "0,0,12,6", color: "msx-glass", headline: titulo, text: texto }] }]
+        };
+    }
+
+    function limpaHost(h) { return (h || "").replace(/\/+$/, ""); }
+
+    /* ---------------- aparelho e licença (mesmo sistema do app Android) ---------------- */
+    function idDoAparelho(pronto) {
+        var salvo = ler("hw");
+        if (salvo) { pronto(salvo); return; }
+        var feito = false;
+        function fim(id) { if (feito) { return; } feito = true; guardar("hw", id); pronto(id); }
+        try {
+            TVXInteractionPlugin.requestData("info", function (d) {
+                var s = d && d.info && d.info.system ? d.info.system : {};
+                var id = s.macAddress || s.macAddress2 || s.deviceId || s.serialNumber || "";
+                fim(id ? "msx:" + id : novoId());
+            });
+        } catch (e) { fim(novoId()); }
+        setTimeout(function () { fim(novoId()); }, 4000);
+    }
+
+    function carregarConta(pronto, erro) {
+        idDoAparelho(function (hw) {
+            http("POST", API + "/register", { hw_id: hw, platform: "msx", app_version: VERSAO }, function (lic) {
+                estado.lic = lic;
+                if (!lic.allowed) { pronto(); return; }
+                http("POST", API + "/device/login", { mac: lic.mac, key: lic.device_key }, function (v) {
+                    estado.listas = v.playlists || [];
+                    var escolhida = ler("lista");
+                    estado.lista = estado.listas[0] || null;
+                    for (var i = 0; i < estado.listas.length; i++) {
+                        if (String(estado.listas[i].id) === escolhida) { estado.lista = estado.listas[i]; }
+                    }
+                    pronto();
+                }, erro);
+            }, erro);
+        });
+    }
+
+    /* ---------------- API Xtream: direto do provedor (IP da casa); se falhar, pelo servidor ---------------- */
+    function credenciais() {
+        var p = estado.lista;
+        if (!p) { return null; }
+        if (p.type === "xtream" && p.xtream_host) {
+            return { host: limpaHost(p.xtream_host), user: p.xtream_username, pass: p.xtream_password || "" };
+        }
+        var m = /^(https?:\/\/[^\/]+)\/get\.php\?(.*)$/.exec(p.m3u_url || "");
+        if (m) {
+            var u = /(?:^|&)username=([^&]*)/.exec(m[2]), s = /(?:^|&)password=([^&]*)/.exec(m[2]);
+            if (u && s) { return { host: m[1], user: decodeURIComponent(u[1]), pass: decodeURIComponent(s[1]) }; }
+        }
+        return null;
+    }
+
+    function xtream(acao, extra, ok, falha) {
+        var c = credenciais(), lic = estado.lic, p = estado.lista;
+        var viaServidor = API + "/device/xtream?mac=" + encodeURIComponent(lic.mac) + "&key=" + encodeURIComponent(lic.device_key) +
+            "&pl=" + p.id + "&action=" + acao + (extra || "");
+        if (!c) { http("GET", viaServidor, null, ok, falha); return; }
+        var direto = c.host + "/player_api.php?username=" + encodeURIComponent(c.user) + "&password=" + encodeURIComponent(c.pass) +
+            "&action=" + acao + (extra || "");
+        http("GET", direto, null, ok, function (m1) {
+            http("GET", viaServidor, null, ok, function (m2) { falha("direto: " + m1 + " / servidor: " + m2); });
+        });
+    }
+
+    function urlVideo(tipo, id, ext) {
+        var c = credenciais(), lic = estado.lic;
+        if (c) { return c.host + "/" + tipo + "/" + encodeURIComponent(c.user) + "/" + encodeURIComponent(c.pass) + "/" + id + "." + ext; }
+        return API + "/device/stream?mac=" + encodeURIComponent(lic.mac) + "&key=" + encodeURIComponent(lic.device_key) +
+            "&pl=" + estado.lista.id + "&type=" + tipo + "&id=" + id + "&ext=" + ext;
+    }
+
+    function formatoAoVivo() { return ler("fmt") || "m3u8"; }
+
+    /* ---------------- telas ---------------- */
+    function textoAtivacao() {
+        var lic = estado.lic;
+        return [
+            "{col:msx-white}1. No celular, abra {txt:msx-yellow:" + SITE + "}",
+            "2. Digite o código do aparelho: {txt:msx-yellow:" + lic.mac + "}",
+            "3. Quando pedir a chave, digite: {txt:msx-yellow:" + lic.device_key + "}",
+            "4. Cadastre a sua lista e volte aqui em {txt:msx-yellow:Atualizar}."
+        ].join("{br}");
+    }
+
+    function situacao() {
+        var lic = estado.lic;
+        if (lic.status === "trial") { return "Teste grátis: faltam " + lic.days_left + " dia(s)"; }
+        if (lic.status === "active") { return "Ativo: faltam " + lic.days_left + " dia(s)"; }
+        return "Período encerrado";
+    }
+
+    function telaConta() {
+        var lic = estado.lic;
+        var itens = [{
+            type: "default", layout: "0,0,12,3", color: "msx-glass",
+            headline: situacao(),
+            text: textoAtivacao() + "{br}{br}Para renovar, acesse " + SITE + " com o código " + lic.mac + "."
+        }, {
+            type: "button", layout: "0,3,4,1", icon: "refresh", label: "Atualizar", action: "reload"
+        }, {
+            type: "button", layout: "4,3,4,1", icon: "settings",
+            label: "Ao vivo: " + (formatoAoVivo() === "ts" ? "TS" : "HLS"),
+            action: "interaction:commit", data: { acao: "formato" }
+        }];
+        for (var i = 0; i < estado.listas.length && i < 4; i++) {
+            var p = estado.listas[i];
+            itens.push({
+                type: "button", layout: (i % 2 * 6) + "," + (4 + Math.floor(i / 2)) + ",6,1",
+                icon: estado.lista && estado.lista.id === p.id ? "check" : "playlist-play",
+                label: "Lista: " + p.name, action: "interaction:commit", data: { acao: "lista", id: p.id }
+            });
+        }
+        return { cache: false, type: "pages", headline: "Minha conta", pages: [{ items: itens }] };
+    }
+
+    function menuPrincipal() {
+        var lic = estado.lic, menu;
+        if (!lic.allowed) {
+            menu = [{ icon: "lock", label: "Renovar", data: mensagem("Período encerrado",
+                "O seu período do Sofae terminou.{br}{br}Para continuar, acesse {txt:msx-yellow:" + SITE +
+                "} no celular e use o código {txt:msx-yellow:" + lic.mac + "}.") }];
+        } else if (!estado.listas.length) {
+            menu = [{ icon: "playlist-add", label: "Adicionar lista", data: {
+                cache: false, type: "pages", headline: "Adicione a sua lista",
+                pages: [{ items: [{ type: "default", layout: "0,0,12,4", color: "msx-glass",
+                    headline: situacao(), text: textoAtivacao() },
+                    { type: "button", layout: "4,4,4,1", icon: "refresh", label: "Atualizar", action: "reload:menu" }] }]
+            } }];
+        } else {
+            menu = [
+                { icon: "live-tv", label: "TV ao vivo", data: "request:interaction:live" },
+                { icon: "movie", label: "Filmes", data: "request:interaction:vod" },
+                { type: "separator" },
+                { icon: "account-circle", label: "Minha conta", data: "request:interaction:conta" }
+            ];
+        }
+        return { name: "Sofae", version: VERSAO, headline: "Sofae", menu: menu };
+    }
+
+    function telaCategorias(tipo, cats) {
+        var itens = [];
+        for (var i = 0; i < cats.length; i++) {
+            itens.push({ title: cats[i].category_name, action: "content:request:interaction:" + tipo + "cat_" + cats[i].category_id });
+        }
+        if (!itens.length) { return mensagem("Nada encontrado", "A lista não trouxe categorias."); }
+        return {
+            cache: false, type: "list", headline: tipo === "live" ? "TV ao vivo" : "Filmes",
+            template: { type: "button", layout: "0,0,4,1", icon: tipo === "live" ? "live-tv" : "movie" },
+            items: itens
+        };
+    }
+
+    function telaItens(tipo, lista) {
+        var itens = [], fmt = formatoAoVivo();
+        for (var i = 0; i < lista.length; i++) {
+            var s = lista[i];
+            if (tipo === "live") {
+                itens.push({ title: s.name, image: s.stream_icon || null, action: "video:" + urlVideo("live", s.stream_id, fmt) });
+            } else {
+                itens.push({ title: s.name, image: s.stream_icon || null,
+                    action: "video:" + urlVideo("movie", s.stream_id, s.container_extension || "mp4") });
+            }
+        }
+        if (!itens.length) { return mensagem("Nada encontrado", "Esta categoria está vazia."); }
+        return {
+            cache: false, type: "list", headline: tipo === "live" ? "Canais (" + itens.length + ")" : "Filmes (" + itens.length + ")",
+            template: tipo === "live"
+                ? { type: "separate", layout: "0,0,3,2", imageFiller: "fit", icon: "msx-white-soft:live-tv", color: "msx-glass" }
+                : { type: "separate", layout: "0,0,2,4", imageFiller: "cover", icon: "msx-white-soft:movie", color: "msx-glass" },
+            items: itens
+        };
+    }
+
+    function erroLista(motivo) {
+        return mensagem("Não foi possível abrir a lista",
+            "O servidor da lista não respondeu (" + motivo + ").{br}Confira em " + SITE + " se os dados da lista estão certos.");
+    }
+
+    /* ---------------- integração com o Media Station X ---------------- */
+    function Sofae() {
+        this.init = function () {};
+        this.ready = function () {};
+        this.handleEvent = function () {};
+        this.handleData = function (d) {
+            var x = d && d.data ? d.data : {};
+            if (x.acao === "formato") {
+                guardar("fmt", formatoAoVivo() === "ts" ? "m3u8" : "ts");
+                TVXInteractionPlugin.executeAction("reload:content");
+            } else if (x.acao === "lista") {
+                guardar("lista", String(x.id));
+                for (var i = 0; i < estado.listas.length; i++) {
+                    if (estado.listas[i].id === x.id) { estado.lista = estado.listas[i]; }
+                }
+                TVXInteractionPlugin.executeAction("reload:content");
+            }
+        };
+        this.handleRequest = function (id, dados, responder) {
+            if (id === "init") {
+                carregarConta(function () { responder(menuPrincipal()); }, function (m) {
+                    responder({ name: "Sofae", version: VERSAO, headline: "Sofae", menu: [{ icon: "error", label: "Sem conexão",
+                        data: mensagem("Sem conexão", "Não foi possível falar com o Sofae (" + m + ").{br}Verifique a internet e abra o app de novo.") }] });
+                });
+            } else if (!estado.lic) {
+                responder(mensagem("Aguarde", "Abra o Sofae novamente."));
+            } else if (id === "conta") {
+                responder(telaConta());
+            } else if (id === "live" || id === "vod") {
+                xtream(id === "live" ? "get_live_categories" : "get_vod_categories", "", function (c) {
+                    responder(telaCategorias(id, c || []));
+                }, function (m) { responder(erroLista(m)); });
+            } else if (id.indexOf("livecat_") === 0 || id.indexOf("vodcat_") === 0) {
+                var tipo = id.indexOf("live") === 0 ? "live" : "vod";
+                var cat = id.substr(id.indexOf("_") + 1);
+                xtream(tipo === "live" ? "get_live_streams" : "get_vod_streams", "&category_id=" + encodeURIComponent(cat), function (l) {
+                    responder(telaItens(tipo, l || []));
+                }, function (m) { responder(erroLista(m)); });
+            } else {
+                responder(null);
+            }
+        };
+    }
+
+    TVXPluginTools.onReady(function () {
+        TVXInteractionPlugin.setupHandler(new Sofae());
+        TVXInteractionPlugin.init();
+    });
+})();
+</script>
+</head>
+<body></body>
+</html>
