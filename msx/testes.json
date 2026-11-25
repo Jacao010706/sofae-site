@@ -1,0 +1,25 @@
+{
+    "type": "list",
+    "headline": "Vídeos de teste",
+    "template": {
+        "type": "separate",
+        "layout": "0,0,4,3",
+        "imageFiller": "cover"
+    },
+    "items": [{
+        "title": "1. Filme em MP4",
+        "titleFooter": "Arquivo MP4 comum",
+        "image": "https://sofae.com.br/img/filmes_crop.jpg",
+        "action": "video:https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"
+    }, {
+        "title": "2. Filme em HLS",
+        "titleFooter": "Streaming .m3u8",
+        "image": "https://sofae.com.br/img/home_crop.jpg",
+        "action": "video:https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8"
+    }, {
+        "title": "3. Ao vivo em HLS",
+        "titleFooter": "Transmissão ao vivo de teste",
+        "image": "https://sofae.com.br/img/vivo_crop.jpg",
+        "action": "video:https://cph-p2p-msl.akamaized.net/hls/live/2000341/test/master.m3u8"
+    }]
+}

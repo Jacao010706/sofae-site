@@ -1,0 +1,11 @@
+{
+    "name": "Sofae TV",
+    "version": "0.1.0",
+    "parameter": "menu:{PREFIX}{SERVER}/msx/menu.json",
+    "welcome": "none",
+    "launcher": {
+        "icon": "blank",
+        "image": "https://sofae.com.br/img/icone.png",
+        "color": "msx-black-soft"
+    }
+}

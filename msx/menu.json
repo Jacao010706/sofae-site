@@ -1,0 +1,21 @@
+{
+    "headline": "Sofae",
+    "menu": [{
+        "icon": "home",
+        "label": "Início",
+        "data": {
+            "pages": [{
+                "items": [{
+                    "layout": "0,0,12,6",
+                    "color": "msx-glass",
+                    "headline": "Sofae TV — prova de conceito",
+                    "text": "Se você está vendo esta tela, o Sofae já abre na sua TV pelo Media Station X. Vá em \"Vídeos de teste\" e abra cada vídeo para ver se ele toca."
+                }]
+            }]
+        }
+    }, {
+        "icon": "play-circle-outline",
+        "label": "Vídeos de teste",
+        "data": "{PREFIX}{SERVER}/msx/testes.json"
+    }]
+}
