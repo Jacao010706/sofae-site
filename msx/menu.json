@@ -16,6 +16,6 @@
     }, {
         "icon": "play-circle-outline",
         "label": "Vídeos de teste",
-        "data": "{PREFIX}{SERVER}/msx/testes.json"
+        "data": "https://sofae.com.br/msx/testes.json"
     }]
 }
