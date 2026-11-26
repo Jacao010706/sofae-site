@@ -147,6 +147,8 @@
   .vid .thumb{aspect-ratio:16/10;background:linear-gradient(140deg,#3a2470,#1b0d34);display:grid;place-items:center;position:relative}
   .vid .thumb::after{content:"Em breve";position:absolute;top:10px;right:10px;font-size:.68rem;font-weight:700;background:rgba(0,0,0,.45);padding:3px 9px;border-radius:99px;color:var(--sub)}
   .play{width:52px;height:52px;border-radius:50%;background:var(--laranja);display:grid;place-items:center;color:#1a0b00;opacity:.85}
+  .vid video{display:block;width:100%;aspect-ratio:16/9;background:#000}
+  .vid.pronto .thumb::after{content:none}
   .vid div.t{padding:14px 16px}
   .vid b{font-size:.95rem}
   .vid small{display:block;color:var(--sub);font-size:.82rem}
@@ -422,6 +424,7 @@
           <li>Coloque a sua lista pelo <b>teclado da TV</b> ou pelo celular em <b>ativar.sofae.com.br</b>.</li>
         </ol>
         <div class="codigo"><span id="urlTv">sofae.com.br</span><button class="copiar" data-copia="urlTv">Copiar</button></div>
+        <div class="mac-acoes"><a class="btn btn-lar btn-peq" href="#tutoriais">Ver o vídeo</a></div>
       </div>
     </div>
   </div>
@@ -432,6 +435,7 @@
   <div class="wrap">
     <div class="cab revela"><span class="tag">Tutoriais em vídeo</span><h2>Aprenda a usar em minutos</h2><p>Vídeos curtos, passo a passo.</p></div>
     <div class="tut">
+      <div class="vid pronto revela"><video controls preload="none" playsinline poster="img/tut-tv-capa.jpg" src="video/sofae-tv-samsung-lg.mp4"></video><div class="t"><b>TV Samsung e LG</b><small>Pelo Media Station X · 49 s</small></div></div>
       <div class="vid revela"><div class="thumb"><div class="play"><svg width="22" height="22"><use href="#i-play"/></svg></div></div><div class="t"><b>Instalar no Fire Stick</b><small>Pelo Downloader</small></div></div>
       <div class="vid revela"><div class="thumb"><div class="play"><svg width="22" height="22"><use href="#i-play"/></svg></div></div><div class="t"><b>Adicionar a sua lista</b><small>Xtream ou M3U</small></div></div>
       <div class="vid revela"><div class="thumb"><div class="play"><svg width="22" height="22"><use href="#i-play"/></svg></div></div><div class="t"><b>Modo demonstração</b><small>Conhecer o app sem lista</small></div></div>
