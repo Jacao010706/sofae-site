@@ -8,7 +8,10 @@
 <script>
 (function () {
     var API = "https://web-production-d8671.up.railway.app/license";
-    var VERSAO = "msx-0.3.1";
+    var VERSAO = "msx-0.4.0";
+    var FUNDO = "https://sofae.com.br/img/tv-fundo.jpg";
+    var LOGO = "https://sofae.com.br/img/logo.png";
+    var CARTAO = "msx-black-soft";
     var SITE = "ativar.sofae.com.br";
 
     var estado = { lic: null, listas: [], lista: null };
@@ -49,8 +52,13 @@
     function mensagem(titulo, texto) {
         return {
             cache: false, type: "pages", headline: titulo,
-            pages: [{ items: [{ type: "default", layout: "0,0,12,6", color: "msx-glass", headline: titulo, text: texto }] }]
+            pages: [{ items: [{ type: "default", layout: "0,0,12,6", color: CARTAO, headline: titulo, text: texto }] }]
         };
+    }
+
+    function tema(tela) {
+        if (tela && typeof tela === "object" && !tela.background) { tela.background = FUNDO; }
+        return tela;
     }
 
     function limpaHost(h) { return (h || "").replace(/\/+$/, ""); }
@@ -146,7 +154,7 @@
     function telaConta() {
         var lic = estado.lic;
         var itens = [{
-            type: "default", layout: "0,0,12,3", color: "msx-glass",
+            type: "default", layout: "0,0,12,3", color: CARTAO,
             headline: situacao(),
             text: textoAtivacao() + "{br}{br}Para renovar, acesse " + SITE + " com o código " + lic.mac + "."
         }, {
@@ -173,13 +181,13 @@
     function menuPrincipal() {
         var lic = estado.lic, menu;
         if (!lic.allowed) {
-            menu = [{ icon: "lock", label: "Renovar", data: mensagem("Período encerrado",
+            menu = [{ icon: "lock", label: "Renovar", data: tema(mensagem("Período encerrado",
                 "O seu período do Sofae terminou.{br}{br}Para continuar, acesse {txt:msx-yellow:" + SITE +
-                "} no celular e use o código {txt:msx-yellow:" + lic.mac + "}.") }];
+                "} no celular e use o código {txt:msx-yellow:" + lic.mac + "}.")) }];
         } else if (!estado.listas.length) {
             menu = [{ icon: "playlist-add", label: "Adicionar lista", data: {
-                cache: false, type: "pages", headline: "Adicione a sua lista",
-                pages: [{ items: [{ type: "default", layout: "0,0,12,4", color: "msx-glass",
+                cache: false, type: "pages", headline: "Adicione a sua lista", background: FUNDO,
+                pages: [{ items: [{ type: "default", layout: "0,0,12,4", color: CARTAO,
                     headline: situacao(), text: textoAtivacao() },
                     { type: "button", layout: "0,4,6,1", icon: "keyboard", label: "Digitar a lista aqui na TV",
                         action: "content:request:interaction:teclado" },
@@ -187,6 +195,7 @@
             } }];
         } else {
             menu = [
+                { icon: "home", label: "Início", data: "request:interaction:inicio" },
                 { icon: "live-tv", label: "TV ao vivo", data: "request:interaction:live" },
                 { icon: "movie", label: "Filmes", data: "request:interaction:vod" },
                 { icon: "video-library", label: "Séries", data: "request:interaction:series" },
@@ -194,7 +203,26 @@
                 { icon: "account-circle", label: "Minha conta", data: "request:interaction:conta" }
             ];
         }
-        return { name: "Sofae", version: VERSAO, headline: "Sofae", menu: menu };
+        return { name: "Sofae", version: VERSAO, headline: "Sofae", logo: LOGO, background: FUNDO, menu: menu };
+    }
+
+    function telaInicio() {
+        function bloco(x, icone, nome, destino) {
+            return { type: "default", layout: x + ",1,4,4", color: CARTAO, icon: icone, iconSize: "large",
+                headline: nome, action: "content:request:interaction:" + destino };
+        }
+        return tema({
+            cache: false, type: "pages", headline: "Início",
+            pages: [{ items: [
+                { type: "default", layout: "0,0,12,1", color: CARTAO, headline: situacao(),
+                  text: estado.lista ? "Lista: " + estado.lista.name : "", tag: "SOFAE", tagColor: "#FF8A1A" },
+                bloco(0, "live-tv", "TV ao vivo", "live"),
+                bloco(4, "movie", "Filmes", "vod"),
+                bloco(8, "video-library", "Séries", "series"),
+                { type: "button", layout: "0,5,12,1", icon: "account-circle", label: "Minha conta",
+                  action: "content:request:interaction:conta" }
+            ] }]
+        });
     }
 
     function telaCategorias(tipo, cats) {
@@ -205,7 +233,7 @@
         if (!itens.length) { return mensagem("Nada encontrado", "A lista não trouxe categorias."); }
         return {
             cache: false, type: "list", headline: { live: "TV ao vivo", vod: "Filmes", series: "Séries" }[tipo],
-            template: { type: "button", layout: "0,0,4,1", icon: { live: "live-tv", vod: "movie", series: "video-library" }[tipo] },
+            template: { type: "default", layout: "0,0,6,1", color: CARTAO },
             items: itens
         };
     }
@@ -225,8 +253,8 @@
         return {
             cache: false, type: "list", headline: tipo === "live" ? "Canais (" + itens.length + ")" : "Filmes (" + itens.length + ")",
             template: tipo === "live"
-                ? { type: "separate", layout: "0,0,3,2", imageFiller: "fit", icon: "msx-white-soft:live-tv", color: "msx-glass" }
-                : { type: "separate", layout: "0,0,2,4", imageFiller: "cover", icon: "msx-white-soft:movie", color: "msx-glass" },
+                ? { type: "default", layout: "0,0,6,1", imageFiller: "fit", imageWidth: 1.5, icon: "msx-white-soft:live-tv", color: CARTAO }
+                : { type: "separate", layout: "0,0,2,4", imageFiller: "cover", icon: "msx-white-soft:movie", color: CARTAO },
             items: itens
         };
     }
@@ -240,7 +268,7 @@
         if (!itens.length) { return mensagem("Nada encontrado", "Esta categoria está vazia."); }
         return {
             cache: false, type: "list", headline: "Séries (" + itens.length + ")",
-            template: { type: "separate", layout: "0,0,2,4", imageFiller: "cover", icon: "msx-white-soft:video-library", color: "msx-glass" },
+            template: { type: "separate", layout: "0,0,2,4", imageFiller: "cover", icon: "msx-white-soft:video-library", color: CARTAO },
             items: itens
         };
     }
@@ -263,7 +291,7 @@
         if (!itens.length) { return mensagem(nome, "Esta série ainda não tem episódios."); }
         return {
             cache: false, type: "list", headline: nome + " (" + itens.length + " episódios)",
-            template: { type: "button", layout: "0,0,6,1", icon: "play-circle-outline" },
+            template: { type: "default", layout: "0,0,6,1", color: CARTAO, icon: "msx-white-soft:play-circle-outline" },
             items: itens
         };
     }
@@ -281,7 +309,7 @@
     function telaTeclado() {
         if (kb.salvo) {
             return { cache: false, type: "pages", headline: "Lista salva", pages: [{ items: [
-                { type: "default", layout: "0,0,12,3", color: "msx-glass", headline: "{col:msx-green}Lista salva!",
+                { type: "default", layout: "0,0,12,3", color: CARTAO, headline: "{col:msx-green}Lista salva!",
                   text: "A sua lista foi cadastrada neste aparelho.{br}Aperte o botão abaixo para abrir os canais, filmes e séries.{br}{br}Se não abrir, feche e abra o Media Station X de novo." },
                 { type: "button", layout: "3,3,6,1", icon: "play-arrow", label: "Abrir o Sofae", focus: true,
                   action: "interaction:commit", data: { acao: "abrir" } }
@@ -299,7 +327,7 @@
             });
         }
         itens.push({
-            type: "default", layout: "0,1,12,1", color: "msx-glass",
+            type: "default", layout: "0,1,12,1", color: CARTAO,
             headline: (kb.msg ? "{col:msx-red}" + kb.msg : CAMPOS[kb.campo] + ":"),
             text: "{col:msx-yellow}" + (kb[kb.campo] || "") + "_"
         });
@@ -405,33 +433,35 @@
                         data: mensagem("Sem conexão", "Não foi possível falar com o Sofae (" + m + ").{br}Verifique a internet e abra o app de novo.") }] });
                 });
             } else if (!estado.lic) {
-                responder(mensagem("Aguarde", "Abra o Sofae novamente."));
+                responder(tema(mensagem("Aguarde", "Abra o Sofae novamente.")));
+            } else if (id === "inicio") {
+                responder(telaInicio());
             } else if (id === "conta") {
-                responder(telaConta());
+                responder(tema(telaConta()));
             } else if (id === "teclado") {
-                responder(telaTeclado());
+                responder(tema(telaTeclado()));
             } else if (id === "series") {
                 xtream("get_series_categories", "", function (c) {
-                    responder(telaCategorias("series", c || []));
-                }, function (m) { responder(erroLista(m)); });
+                    responder(tema(telaCategorias("series", c || [])));
+                }, function (m) { responder(tema(erroLista(m))); });
             } else if (id.indexOf("seriescat_") === 0) {
                 xtream("get_series", "&category_id=" + encodeURIComponent(id.substr(10)), function (l) {
-                    responder(telaSeries(l || []));
-                }, function (m) { responder(erroLista(m)); });
+                    responder(tema(telaSeries(l || [])));
+                }, function (m) { responder(tema(erroLista(m))); });
             } else if (id.indexOf("serie_") === 0) {
                 xtream("get_series_info", "&series_id=" + encodeURIComponent(id.substr(6)), function (info) {
-                    responder(telaEpisodios(info));
-                }, function (m) { responder(erroLista(m)); });
+                    responder(tema(telaEpisodios(info)));
+                }, function (m) { responder(tema(erroLista(m))); });
             } else if (id === "live" || id === "vod") {
                 xtream(id === "live" ? "get_live_categories" : "get_vod_categories", "", function (c) {
-                    responder(telaCategorias(id, c || []));
-                }, function (m) { responder(erroLista(m)); });
+                    responder(tema(telaCategorias(id, c || [])));
+                }, function (m) { responder(tema(erroLista(m))); });
             } else if (id.indexOf("livecat_") === 0 || id.indexOf("vodcat_") === 0) {
                 var tipo = id.indexOf("live") === 0 ? "live" : "vod";
                 var cat = id.substr(id.indexOf("_") + 1);
                 xtream(tipo === "live" ? "get_live_streams" : "get_vod_streams", "&category_id=" + encodeURIComponent(cat), function (l) {
-                    responder(telaItens(tipo, l || []));
-                }, function (m) { responder(erroLista(m)); });
+                    responder(tema(telaItens(tipo, l || [])));
+                }, function (m) { responder(tema(erroLista(m))); });
             } else {
                 responder(null);
             }
