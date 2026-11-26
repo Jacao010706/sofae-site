@@ -8,7 +8,7 @@
 <script>
 (function () {
     var API = "https://web-production-d8671.up.railway.app/license";
-    var VERSAO = "msx-0.3.0";
+    var VERSAO = "msx-0.3.1";
     var SITE = "ativar.sofae.com.br";
 
     var estado = { lic: null, listas: [], lista: null };
@@ -17,8 +17,11 @@
     function guardar(k, v) { try { TVXServices.storage.set("sofae_" + k, v); } catch (e) {} }
     function ler(k) { try { return TVXServices.storage.get("sofae_" + k, ""); } catch (e) { return ""; } }
 
-    function http(metodo, url, corpo, ok, falha) {
-        var x;
+    function http(metodo, url, corpo, ok0, falha0) {
+        var x, acabou = false, vigia;
+        function ok(d) { if (acabou) { return; } acabou = true; clearTimeout(vigia); ok0(d); }
+        function falha(m) { if (acabou) { return; } acabou = true; clearTimeout(vigia); falha0(m); }
+        vigia = setTimeout(function () { try { x.abort(); } catch (e) {} falha("tempo esgotado"); }, 30000);
         try { x = new XMLHttpRequest(); } catch (e) { falha("sem XHR"); return; }
         x.open(metodo, url, true);
         x.timeout = 25000;
@@ -276,6 +279,14 @@
     var kb = { campo: "host", host: "http://", user: "", pass: "", maius: false, foco: null, msg: "" };
 
     function telaTeclado() {
+        if (kb.salvo) {
+            return { cache: false, type: "pages", headline: "Lista salva", pages: [{ items: [
+                { type: "default", layout: "0,0,12,3", color: "msx-glass", headline: "{col:msx-green}Lista salva!",
+                  text: "A sua lista foi cadastrada neste aparelho.{br}Aperte o botão abaixo para abrir os canais, filmes e séries.{br}{br}Se não abrir, feche e abra o Media Station X de novo." },
+                { type: "button", layout: "3,3,6,1", icon: "play-arrow", label: "Abrir o Sofae", focus: true,
+                  action: "interaction:commit", data: { acao: "abrir" } }
+            ] }] };
+        }
         var itens = [], nomes = ["host", "user", "pass"];
         for (var i = 0; i < 3; i++) {
             var c = nomes[i], ativo = kb.campo === c;
@@ -331,6 +342,8 @@
         else if (!kb.user) { kb.campo = "user"; kb.msg = "Digite o usuário"; }
         else if (!kb.pass) { kb.campo = "pass"; kb.msg = "Digite a senha"; }
         if (kb.msg) { TVXInteractionPlugin.executeAction("reload:content"); return; }
+        if (kb.salvando) { return; }
+        kb.salvando = true;
         kb.msg = "Salvando...";
         TVXInteractionPlugin.executeAction("reload:content");
         var lic = estado.lic;
@@ -338,13 +351,15 @@
             mac: lic.mac, key: lic.device_key, name: "Lista da TV", type: "xtream",
             xtream_host: host, xtream_username: kb.user, xtream_password: kb.pass
         }, function (v) {
+            kb.salvando = false;
             estado.listas = v.playlists || estado.listas;
             var nova = estado.listas[estado.listas.length - 1];
             if (nova) { guardar("lista", String(nova.id)); }
-            kb = { campo: "host", host: "http://", user: "", pass: "", maius: false, foco: null, msg: "" };
-            TVXInteractionPlugin.executeAction("reload:menu");
+            kb = { campo: "host", host: "http://", user: "", pass: "", maius: false, foco: null, msg: "", salvo: true };
+            TVXInteractionPlugin.executeAction("reload:content");
         }, function (m) {
-            kb.msg = "Não foi possível salvar (" + m + "). Confira os dados.";
+            kb.salvando = false;
+            kb.msg = "Não foi possível salvar (" + m + "). Confira os dados e tente de novo.";
             TVXInteractionPlugin.executeAction("reload:content");
         });
     }
@@ -361,7 +376,10 @@
         this.handleEvent = function () {};
         this.handleData = function (d) {
             var x = d && d.data ? d.data : {};
-            if (x.acao === "tecla") {
+            if (x.acao === "abrir") {
+                kb.salvo = false;
+                TVXInteractionPlugin.executeAction("reload");
+            } else if (x.acao === "tecla") {
                 kb.foco = x.id;
                 tecla(x.t);
             } else if (x.acao === "campo") {
