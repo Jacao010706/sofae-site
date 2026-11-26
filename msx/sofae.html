@@ -8,7 +8,7 @@
 <script>
 (function () {
     var API = "https://web-production-d8671.up.railway.app/license";
-    var VERSAO = "msx-0.2.0";
+    var VERSAO = "msx-0.3.0";
     var SITE = "ativar.sofae.com.br";
 
     var estado = { lic: null, listas: [], lista: null };
@@ -152,6 +152,9 @@
             type: "button", layout: "4,3,4,1", icon: "settings",
             label: "Ao vivo: " + (formatoAoVivo() === "ts" ? "TS" : "HLS"),
             action: "interaction:commit", data: { acao: "formato" }
+        }, {
+            type: "button", layout: "8,3,4,1", icon: "keyboard", label: "Digitar nova lista",
+            action: "content:request:interaction:teclado"
         }];
         for (var i = 0; i < estado.listas.length && i < 4; i++) {
             var p = estado.listas[i];
@@ -175,12 +178,15 @@
                 cache: false, type: "pages", headline: "Adicione a sua lista",
                 pages: [{ items: [{ type: "default", layout: "0,0,12,4", color: "msx-glass",
                     headline: situacao(), text: textoAtivacao() },
-                    { type: "button", layout: "4,4,4,1", icon: "refresh", label: "Atualizar", action: "reload:menu" }] }]
+                    { type: "button", layout: "0,4,6,1", icon: "keyboard", label: "Digitar a lista aqui na TV",
+                        action: "content:request:interaction:teclado" },
+                    { type: "button", layout: "6,4,6,1", icon: "refresh", label: "Já cadastrei no celular: Atualizar", action: "reload:menu" }] }]
             } }];
         } else {
             menu = [
                 { icon: "live-tv", label: "TV ao vivo", data: "request:interaction:live" },
                 { icon: "movie", label: "Filmes", data: "request:interaction:vod" },
+                { icon: "video-library", label: "Séries", data: "request:interaction:series" },
                 { type: "separator" },
                 { icon: "account-circle", label: "Minha conta", data: "request:interaction:conta" }
             ];
@@ -195,8 +201,8 @@
         }
         if (!itens.length) { return mensagem("Nada encontrado", "A lista não trouxe categorias."); }
         return {
-            cache: false, type: "list", headline: tipo === "live" ? "TV ao vivo" : "Filmes",
-            template: { type: "button", layout: "0,0,4,1", icon: tipo === "live" ? "live-tv" : "movie" },
+            cache: false, type: "list", headline: { live: "TV ao vivo", vod: "Filmes", series: "Séries" }[tipo],
+            template: { type: "button", layout: "0,0,4,1", icon: { live: "live-tv", vod: "movie", series: "video-library" }[tipo] },
             items: itens
         };
     }
@@ -222,6 +228,127 @@
         };
     }
 
+    function telaSeries(lista) {
+        var itens = [];
+        for (var i = 0; i < lista.length; i++) {
+            var s = lista[i];
+            itens.push({ title: s.name, image: s.cover || null, action: "content:request:interaction:serie_" + s.series_id });
+        }
+        if (!itens.length) { return mensagem("Nada encontrado", "Esta categoria está vazia."); }
+        return {
+            cache: false, type: "list", headline: "Séries (" + itens.length + ")",
+            template: { type: "separate", layout: "0,0,2,4", imageFiller: "cover", icon: "msx-white-soft:video-library", color: "msx-glass" },
+            items: itens
+        };
+    }
+
+    function telaEpisodios(info) {
+        var eps = (info && info.episodes) || {}, itens = [], temporadas = [];
+        for (var t in eps) { if (eps.hasOwnProperty(t)) { temporadas.push(t); } }
+        temporadas.sort(function (a, b) { return Number(a) - Number(b); });
+        for (var i = 0; i < temporadas.length; i++) {
+            var lista = eps[temporadas[i]] || [];
+            for (var j = 0; j < lista.length; j++) {
+                var e = lista[j];
+                itens.push({
+                    title: "T" + temporadas[i] + " E" + (e.episode_num || (j + 1)) + (e.title ? " - " + e.title : ""),
+                    action: "video:" + urlVideo("series", e.id, e.container_extension || "mp4")
+                });
+            }
+        }
+        var nome = info && info.info && info.info.name ? info.info.name : "Episódios";
+        if (!itens.length) { return mensagem(nome, "Esta série ainda não tem episódios."); }
+        return {
+            cache: false, type: "list", headline: nome + " (" + itens.length + " episódios)",
+            template: { type: "button", layout: "0,0,6,1", icon: "play-circle-outline" },
+            items: itens
+        };
+    }
+
+    /* ---------------- teclado na tela ---------------- */
+    var CAMPOS = { host: "Servidor", user: "Usuário", pass: "Senha" };
+    var TECLAS = [
+        "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", ".", "/",
+        "q", "w", "e", "r", "t", "y", "u", "i", "o", "p", ":", "-",
+        "a", "s", "d", "f", "g", "h", "j", "k", "l", "@", "_", "#MAIUS",
+        "z", "x", "c", "v", "b", "n", "m", "#APAGA", "#LIMPA", "#HTTP", "#SALVAR"
+    ];
+    var kb = { campo: "host", host: "http://", user: "", pass: "", maius: false, foco: null, msg: "" };
+
+    function telaTeclado() {
+        var itens = [], nomes = ["host", "user", "pass"];
+        for (var i = 0; i < 3; i++) {
+            var c = nomes[i], ativo = kb.campo === c;
+            itens.push({
+                id: "campo_" + c, type: "button", layout: (i * 4) + ",0,4,1",
+                icon: ativo ? "edit" : "radio-button-unchecked",
+                label: CAMPOS[c] + (kb[c] ? " ✓" : ""),
+                focus: kb.foco === "campo_" + c,
+                action: "interaction:commit", data: { acao: "campo", c: c }
+            });
+        }
+        itens.push({
+            type: "default", layout: "0,1,12,1", color: "msx-glass",
+            headline: (kb.msg ? "{col:msx-red}" + kb.msg : CAMPOS[kb.campo] + ":"),
+            text: "{col:msx-yellow}" + (kb[kb.campo] || "") + "_"
+        });
+        var x = 0, y = 2;
+        for (var k = 0; k < TECLAS.length; k++) {
+            var t = TECLAS[k], larg = t === "#SALVAR" ? 2 : 1, item = {
+                id: "k" + k, type: "button", layout: x + "," + y + "," + larg + ",1",
+                focus: kb.foco === "k" + k,
+                action: "interaction:commit", data: { acao: "tecla", t: t, id: "k" + k }
+            };
+            if (t === "#MAIUS") { item.label = kb.maius ? "abc" : "ABC"; }
+            else if (t === "#APAGA") { item.icon = "backspace"; }
+            else if (t === "#LIMPA") { item.icon = "clear"; }
+            else if (t === "#HTTP") { item.label = "http://"; }
+            else if (t === "#SALVAR") { item.label = "Salvar"; item.icon = "check"; item.color = "msx-green"; }
+            else { item.label = kb.maius ? t.toUpperCase() : t; }
+            itens.push(item);
+            x += larg;
+            if (x >= 12) { x = 0; y++; }
+        }
+        return { cache: false, type: "pages", headline: "Digite a sua lista (Xtream)", pages: [{ items: itens }] };
+    }
+
+    function tecla(t) {
+        var v = kb[kb.campo] || "";
+        kb.msg = "";
+        if (t === "#MAIUS") { kb.maius = !kb.maius; }
+        else if (t === "#APAGA") { v = v.substr(0, v.length - 1); }
+        else if (t === "#LIMPA") { v = ""; }
+        else if (t === "#HTTP") { v = "http://"; }
+        else if (t === "#SALVAR") { salvarLista(); return; }
+        else { v += kb.maius ? t.toUpperCase() : t; }
+        kb[kb.campo] = v.substr(0, 200);
+        TVXInteractionPlugin.executeAction("reload:content");
+    }
+
+    function salvarLista() {
+        var host = (kb.host || "").replace(/\/+$/, "");
+        if (!/^https?:\/\/[^\/\s]+/.test(host)) { kb.campo = "host"; kb.msg = "Digite o servidor, ex.: http://servidor.com:8080"; }
+        else if (!kb.user) { kb.campo = "user"; kb.msg = "Digite o usuário"; }
+        else if (!kb.pass) { kb.campo = "pass"; kb.msg = "Digite a senha"; }
+        if (kb.msg) { TVXInteractionPlugin.executeAction("reload:content"); return; }
+        kb.msg = "Salvando...";
+        TVXInteractionPlugin.executeAction("reload:content");
+        var lic = estado.lic;
+        http("POST", API + "/device/playlists", {
+            mac: lic.mac, key: lic.device_key, name: "Lista da TV", type: "xtream",
+            xtream_host: host, xtream_username: kb.user, xtream_password: kb.pass
+        }, function (v) {
+            estado.listas = v.playlists || estado.listas;
+            var nova = estado.listas[estado.listas.length - 1];
+            if (nova) { guardar("lista", String(nova.id)); }
+            kb = { campo: "host", host: "http://", user: "", pass: "", maius: false, foco: null, msg: "" };
+            TVXInteractionPlugin.executeAction("reload:menu");
+        }, function (m) {
+            kb.msg = "Não foi possível salvar (" + m + "). Confira os dados.";
+            TVXInteractionPlugin.executeAction("reload:content");
+        });
+    }
+
     function erroLista(motivo) {
         return mensagem("Não foi possível abrir a lista",
             "O servidor da lista não respondeu (" + motivo + ").{br}Confira em " + SITE + " se os dados da lista estão certos.");
@@ -234,7 +361,15 @@
         this.handleEvent = function () {};
         this.handleData = function (d) {
             var x = d && d.data ? d.data : {};
-            if (x.acao === "formato") {
+            if (x.acao === "tecla") {
+                kb.foco = x.id;
+                tecla(x.t);
+            } else if (x.acao === "campo") {
+                kb.campo = x.c;
+                kb.foco = "campo_" + x.c;
+                kb.msg = "";
+                TVXInteractionPlugin.executeAction("reload:content");
+            } else if (x.acao === "formato") {
                 guardar("fmt", formatoAoVivo() === "ts" ? "m3u8" : "ts");
                 TVXInteractionPlugin.executeAction("reload:content");
             } else if (x.acao === "lista") {
@@ -255,6 +390,20 @@
                 responder(mensagem("Aguarde", "Abra o Sofae novamente."));
             } else if (id === "conta") {
                 responder(telaConta());
+            } else if (id === "teclado") {
+                responder(telaTeclado());
+            } else if (id === "series") {
+                xtream("get_series_categories", "", function (c) {
+                    responder(telaCategorias("series", c || []));
+                }, function (m) { responder(erroLista(m)); });
+            } else if (id.indexOf("seriescat_") === 0) {
+                xtream("get_series", "&category_id=" + encodeURIComponent(id.substr(10)), function (l) {
+                    responder(telaSeries(l || []));
+                }, function (m) { responder(erroLista(m)); });
+            } else if (id.indexOf("serie_") === 0) {
+                xtream("get_series_info", "&series_id=" + encodeURIComponent(id.substr(6)), function (info) {
+                    responder(telaEpisodios(info));
+                }, function (m) { responder(erroLista(m)); });
             } else if (id === "live" || id === "vod") {
                 xtream(id === "live" ? "get_live_categories" : "get_vod_categories", "", function (c) {
                     responder(telaCategorias(id, c || []));
